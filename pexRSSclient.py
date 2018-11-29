@@ -48,18 +48,58 @@ def main():
                                                                                    webbrowser.WindowsDefault())
         my_socket.sendall(bytes(http_req, 'UTF-8'))
 
-        response_over = False
-        xml_text = ""
-        while not response_over:
-            response = my_socket.recv(buffer_size)
-            xml_text += response.decode('UTF-8', 'replace')
+        try:
+            response_over = False
+            xml_text = ""
+            while not response_over:
+                response = my_socket.recv(buffer_size)
+                xml_text += response.decode('UTF-8', 'replace')
+                if "</rss>" in xml_text:
+                    response_over = True
+        except socket.timeout:
+            print("Socket timed out.  Check site and debugging")
 
-
+        parsed_data = parse_xml(xml_text)
+        choice = ""
+        while choice != 'quit':
+            i = 1
+            for article in parsed_data:
+                print(i, article[0], article[1])
+                i += 1
+            choice = input("""Select an article number to read.  Enter "quit" to exit. """)
+            if choice.isdigit():
+                if int(choice) <= i and parsed_data[int(choice) - 1][0] != "Error Value.":
+                    get_article(parsed_data[int(choice) - 1][1], my_socket)
 
     finally:
         my_socket.close()
 
     del my_socket
+
+
+def get_article(url, my_socket):
+    # Grab html from url
+    page_url = urlparse(url)
+    http_req = "GET {} HTTP/1.1\r\nHOST: {} \r\nUser-Agent: {}\r\n\r\n".format(page_url[2],
+                                                                               page_url[1],
+                                                                               webbrowser.Chrome())
+    my_socket.sendall(bytes(http_req, 'UTF-8'))
+
+    try:
+        response_over = False
+        html_text = ""
+        while not response_over:
+            response = my_socket.recv(1024)
+            html_text += response.decode('UTF-8', 'replace')
+            if "</html>" in html_text:
+                response_over = True
+    except socket.timeout:
+        print("Socket timed out.  Check site and debugging")
+
+    if html_text.find("<HTML>") > 0:
+        web_page = html_text[html_text.find("<HTML>"):html_text.find("</HTML>")]
+    else:
+        web_page = "File is not html"
 
     # Save page to file
     filename = os.path.dirname(os.path.abspath(__file__)) + "/temp.html"
@@ -69,7 +109,7 @@ def main():
 
     # Open the file
     print("Opening the web page in a browser")
-    webbrowser.open('file:://' + filename)
+    webbrowser.open_new('file:://' + filename)
 
 
 def remove_non_ascii_characters(text):
@@ -81,7 +121,7 @@ def remove_non_ascii_characters(text):
     return new_text
 
 
-def parseXML(text):
+def parse_xml(text):
     """ Parse a HTML/XML data string that is a typical RSS feed into
         information about individual article
     :param text: A HTML/XML data string
@@ -91,13 +131,16 @@ def parseXML(text):
     articles = []
 
     for oneItem in soup.findAll('item'):
-        title = oneItem.find('title').text
-        link = oneItem.find('guid').text
+        try:
+            title = oneItem.find('title').text
+            link = oneItem.find('guid').text
+        except AttributeError:
+            title = "Error Value."
+            link = "Title or Link not found."
         articles.append((title, link))
 
     return articles
 
 
-# ---------------------------------------------------------------------
 if __name__ == '__main__':
     main()
