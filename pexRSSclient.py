@@ -19,13 +19,13 @@ def main():
     my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     # Three way handshake
-    server_name = '127.0.0.1'  # localhost
-    server_port = 1055
-    print('connecting to {} on port {}'.format(server_name, server_port))
+    server_name = socket.gethostbyname(sys.argv[0])  # Gets the address of the url
+    server_port = 80
+    print('connecting to {} at {} on port {}'.format(sys.argv[0], server_name, server_port))
     my_socket.connect((server_name, server_port))
 
     # The size of the TCP receive buffer
-    buffer_size = 16
+    buffer_size = 1024
 
     try:
         # Send the server a message.
@@ -57,10 +57,8 @@ def main():
         print("The total response from the server was:\n" + total_response)
 
     finally:
-        # Close the socket, which releases all of the memory resources the socket used.
         my_socket.close()
 
-    # Delete the socket from memory to again reclaim memory resources.
     del my_socket
 
 # ---------------------------------------------------------------------
