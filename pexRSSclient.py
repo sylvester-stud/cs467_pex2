@@ -49,7 +49,8 @@ def main():
         my_socket.sendall(bytes(http_req, 'UTF-8'))
 
         response_over = False
-        while !response_over:
+        xml_text = ""
+        while not response_over:
             response = my_socket.recv(buffer_size)
             xml_text += response.decode('UTF-8', 'replace')
 
@@ -60,8 +61,6 @@ def main():
 
     del my_socket
 
-
-
     # Save page to file
     filename = os.path.dirname(os.path.abspath(__file__)) + "/temp.html"
     print("Saving web page to ... -->", filename)
@@ -71,6 +70,7 @@ def main():
     # Open the file
     print("Opening the web page in a browser")
     webbrowser.open('file:://' + filename)
+
 
 def remove_non_ascii_characters(text):
     new_text = ''
@@ -96,6 +96,7 @@ def parseXML(text):
         articles.append((title, link))
 
     return articles
+
 
 # ---------------------------------------------------------------------
 if __name__ == '__main__':
