@@ -91,7 +91,7 @@ def get_article(url, my_socket):
         while not response_over:
             response = my_socket.recv(1024)
             html_text += response.decode('UTF-8', 'replace')
-            if "</html>" in html_text:
+            if "</HTML>" in html_text:
                 response_over = True
     except socket.timeout:
         print("Socket timed out.  Check site and debugging")
